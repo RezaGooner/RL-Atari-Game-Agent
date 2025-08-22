@@ -6,14 +6,11 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.vec_env import DummyVecEnv, VecFrameStack
 from gymnasium.wrappers import AtariPreprocessing, TransformObservation
 
-# ثبت محیط‌های آتاری
 gym.register_envs(ale_py)
 
 def make_env():
-    # غیرفعال کردن frame skip در env اصلی
     env = gym.make("ALE/Breakout-v5", render_mode="human", frameskip=1)
     
-    # پیش‌پردازش 84x84 grayscale
     env = AtariPreprocessing(
         env,
         noop_max=30,
@@ -24,7 +21,6 @@ def make_env():
         scale_obs=False
     )
 
-    # grayscale_obs=True → (84,84) → اضافه کردن محور کانال → transpose به (C,H,W)
     new_obs_space = gym.spaces.Box(
         low=0,
         high=255,
@@ -38,16 +34,12 @@ def make_env():
     )
     return env
 
-# بسته‌بندی محیط
 env = DummyVecEnv([make_env])
 env = VecFrameStack(env, n_stack=4, channels_order="first")
 
-print("Run observation space:", env.observation_space)  # باید (4,84,84) باشد
-
-# بارگذاری مدل train شده روی همین شکل ورودی
+print("Run observation space:", env.observation_space)
 model = DQN.load("breakout_dqn_84x84.zip", env=env)
 
-# اجرای مدل
 obs = env.reset()
 for _ in range(5000):
     action, _ = model.predict(obs, deterministic=True)
@@ -55,3 +47,4 @@ for _ in range(5000):
     time.sleep(0.01)
 
 env.close()
+
